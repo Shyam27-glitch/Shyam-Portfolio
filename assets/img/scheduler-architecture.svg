@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 430" role="img" aria-labelledby="t d">
+  <title id="t">Distributed job scheduler architecture</title>
+  <desc id="d">A React dashboard polls an Express API over HTTP. The API and a separate worker service both use PostgreSQL 16 as the single source of truth. The worker runs four loops: poller, heartbeat, reaper and scheduler.</desc>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#1d2226"/></marker>
+  </defs>
+  <style>
+    text{font-family:Archivo,Arial,Helvetica,sans-serif;fill:#1d2226}
+    .h{font-size:15px;font-weight:700}
+    .s{font-size:12px;fill:#50575e}
+    .c{font-size:11.5px;fill:#2747a3}
+    .box{fill:#fff;stroke:#1d2226;stroke-width:1.5}
+    .grp{fill:none;stroke:#50575e;stroke-width:1;stroke-dasharray:5 4}
+    .ln{stroke:#1d2226;stroke-width:1.4;fill:none}
+  </style>
+
+  <!-- Client -->
+  <rect class="box" x="20" y="60" width="170" height="78" rx="3"/>
+  <text class="h" x="36" y="92">Dashboard</text>
+  <text class="s" x="36" y="112">React + Vite</text>
+  <text class="s" x="36" y="128">polls every few seconds</text>
+
+  <!-- API -->
+  <rect class="grp" x="260" y="30" width="200" height="140" rx="3"/>
+  <text class="s" x="272" y="50">API service · Express (TS)</text>
+  <rect class="box" x="276" y="62" width="168" height="52" rx="3"/>
+  <text class="h" x="290" y="86">REST API</text>
+  <text class="s" x="290" y="104">auth, queues, jobs, DLQ</text>
+  <text class="c" x="276" y="134">/api/docs  Swagger UI</text>
+  <text class="c" x="276" y="152">/metrics  Prometheus</text>
+
+  <!-- DB -->
+  <path class="box" d="M560 70 v84 a70 16 0 0 0 140 0 v-84"/>
+  <ellipse class="box" cx="630" cy="70" rx="70" ry="16"/>
+  <text class="h" x="586" y="116">PostgreSQL 16</text>
+  <text class="s" x="584" y="136">single source of truth</text>
+
+  <!-- Worker -->
+  <rect class="grp" x="260" y="230" width="440" height="180" rx="3"/>
+  <text class="s" x="272" y="250">Worker service · separate container, scales independently</text>
+  <rect class="box" x="276" y="264" width="200" height="60" rx="3"/>
+  <text class="h" x="290" y="288">Poller</text>
+  <text class="s" x="290" y="308">claims and runs due jobs</text>
+  <rect class="box" x="488" y="264" width="196" height="60" rx="3"/>
+  <text class="h" x="502" y="288">Heartbeat</text>
+  <text class="s" x="502" y="308">every 10 s</text>
+  <rect class="box" x="276" y="334" width="200" height="60" rx="3"/>
+  <text class="h" x="290" y="358">Reaper</text>
+  <text class="s" x="290" y="378">reclaims stale workers' jobs</text>
+  <rect class="box" x="488" y="334" width="196" height="60" rx="3"/>
+  <text class="h" x="502" y="358">Scheduler</text>
+  <text class="s" x="502" y="378">promotes due + cron jobs</text>
+
+  <!-- arrows -->
+  <path class="ln" d="M190 99 H272" marker-end="url(#a)"/>
+  <text class="c" x="200" y="90">HTTP poll</text>
+  <path class="ln" d="M444 88 H556" marker-end="url(#a)" marker-start="url(#a)"/>
+  <text class="c" x="470" y="80">read / write</text>
+  <path class="ln" d="M630 186 V226" marker-end="url(#a)" marker-start="url(#a)"/>
+  <text class="c" x="440" y="206">FOR UPDATE SKIP LOCKED</text>
+  <path class="ln" d="M600 206 H636" stroke-dasharray="2 3"/>
+</svg>

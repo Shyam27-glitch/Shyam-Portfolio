@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Distributed Job Scheduler — Shyam Sundar S</title>
+  <meta name="description" content="Case study: a multi-tenant job scheduler with atomic worker claiming, heartbeat failure detection, a dead letter queue and a React monitoring dashboard.">
+  <link rel="icon" href="../assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header">
+    <nav class="wrap" aria-label="Main">
+      <a class="brand" href="../index.html">Shyam Sundar S</a>
+      <button class="menu-btn" aria-expanded="false" aria-controls="nav-list">Menu</button>
+      <ul class="nav-list" id="nav-list">
+        <li><a href="../index.html#projects" aria-current="page">Projects</a></li>
+        <li><a href="../index.html#about">About</a></li>
+        <li><a href="../index.html#skills">Skills</a></li>
+        <li><a href="../index.html#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main id="main">
+    <div class="wrap cs-hero">
+      <a class="crumb" href="../index.html#projects">All projects</a>
+      <h1>Distributed Job Scheduler</h1>
+      <p class="lead">A multi-tenant scheduler where jobs survive crashed workers, retry on a policy, and land in a dead letter queue when they can't succeed — with a dashboard to see it all happen.</p>
+    </div>
+
+    <div class="wrap cs-layout">
+      <aside class="spec" aria-label="Project facts">
+        <div><span class="tb-key">Status</span><span class="tb-val">Built and documented</span></div>
+        <div><span class="tb-key">Type</span><span class="tb-val">Backend system with web dashboard</span></div>
+        <div><span class="tb-key">Stack</span>
+          <ul><li>TypeScript, Node.js, Express</li><li>Separate worker service</li><li>PostgreSQL 16</li><li>React + Vite</li><li>JWT auth, Docker Compose</li></ul></div>
+        <div><span class="tb-key">Built</span><span class="tb-val">July 2026</span></div>
+        <div><span class="tb-key">Source</span><a href="https://github.com/Shyam27-glitch/distributed-job-scheduler" target="_blank" rel="noopener">GitHub repository</a></div>
+      </aside>
+
+      <article class="cs-body">
+        <section>
+          <h2>Problem</h2>
+          <p>Applications constantly need work done outside a request: sending emails, generating reports, retrying a failed payment. A scheduler has to guarantee that a job runs, that two workers never run the same job at once, and that a crashed worker doesn't silently lose what it was holding.</p>
+        </section>
+
+        <section>
+          <h2>Users and context</h2>
+          <p>Two kinds of user: developers who submit jobs through the API, and operators who need to see queue health, failing jobs and worker status at a glance. Organisations own projects, projects own queues, and queues run jobs — immediate, delayed, scheduled, recurring or batch — each with its own retry policy.</p>
+        </section>
+
+        <section>
+          <h2>Approach</h2>
+          <p>The central decision was to use PostgreSQL as the only coordination point, rather than adding a message broker such as Redis or RabbitMQ.</p>
+          <ul>
+            <li><strong>Atomic claiming.</strong> Workers claim jobs with <code>SELECT … FOR UPDATE SKIP LOCKED</code>, so two workers racing the same query can never pick up the same row.</li>
+            <li><strong>Why not a broker.</strong> A broker would be a second stateful system that has to stay consistent with job history and retry configuration. For this scale, one database is simpler and correct; the trade-off is a lower throughput ceiling, which I documented.</li>
+            <li><strong>At-least-once delivery.</strong> Exactly-once isn't achievable when a worker can crash mid-job, so every job carries an idempotency key and handlers are expected to be safe to re-run.</li>
+            <li><strong>Polling over WebSockets.</strong> Dashboard data changes on the order of seconds, so interval polling gives near-live updates for a fraction of the complexity.</li>
+          </ul>
+          <figure>
+            <img src="../assets/img/scheduler-architecture.svg" alt="Architecture: React dashboard polls the Express API; the API and a separate worker service share PostgreSQL. The worker runs poller, heartbeat, reaper and scheduler loops." width="720" height="430">
+            <figcaption>Services and how they coordinate. Postgres is the single source of truth.</figcaption>
+          </figure>
+        </section>
+
+        <section>
+          <h2>Design and implementation</h2>
+          <p>The worker runs as its own container with four loops:</p>
+          <ul>
+            <li><strong>Poller</strong> walks non-paused queues by priority, checks remaining capacity, and claims due jobs.</li>
+            <li><strong>Heartbeat</strong> records that the worker is alive every 10 seconds.</li>
+            <li><strong>Reaper</strong> returns jobs held by a worker whose heartbeat is stale back to the queue. It also uses <code>SKIP LOCKED</code>, so every worker can run it without leader election.</li>
+            <li><strong>Scheduler</strong> promotes delayed and retrying jobs when they're due, and turns recurring cron templates into new jobs.</li>
+          </ul>
+          <figure>
+            <img src="../assets/img/scheduler-lifecycle.svg" alt="Job states: scheduled, queued, claimed, running, completed, failed, pending retry and dead lettered, with reaper and manual retry paths back to queued." width="720" height="300">
+            <figcaption>Job lifecycle. Dashed paths are recovery routes: the reaper and a manual retry from the dashboard.</figcaption>
+          </figure>
+          <p>The API is documented with an OpenAPI spec served through Swagger UI, exposes a Prometheus <code>/metrics</code> endpoint, and the dashboard shows queue health, worker status, a job explorer with logs, and throughput charts.</p>
+          <figure>
+            <img src="../assets/img/scheduler-dashboard-jobs.jpg" alt="Dashboard jobs view: four jobs of type recurring, scheduled, delayed and immediate with status badges, a recurring cron job running every five minutes, and an empty dead letter queue." width="1600" height="1162" loading="lazy">
+            <figcaption>The dashboard from a local run: one job of each type, a cron job firing every five minutes, and the dead letter queue.</figcaption>
+          </figure>
+          <figure>
+            <img src="../assets/img/scheduler-dashboard-retry.jpg" alt="Retry policies page with a form to create a policy and a table of fixed, linear and exponential backoff policies." width="1600" height="724" loading="lazy">
+            <figcaption>Retry policies: queues reference one of these to choose fixed, linear or exponential backoff.</figcaption>
+          </figure>
+        </section>
+
+        <section>
+          <h2>Challenges</h2>
+          <ul>
+            <li><strong>Graceful shutdown that wasn't.</strong> The worker's drain logic worked, but Docker's default stop timeout was shorter than in-flight jobs, so the container was killed mid-drain (exit 137). Fixed by setting a 30-second stop grace period above the drain timeout.</li>
+            <li><strong>Jobs that die twice.</strong> A job manually retried after being dead-lettered could fail again and hit a unique constraint. The dead-letter insert became an upsert, and the failure path was hardened so a secondary error can't crash the worker.</li>
+            <li><strong>Testing real locking.</strong> Tests run against a real Postgres instance instead of mocks, because the behaviour that matters is the database's locking. GitHub Actions runs lint and the test suite against a Postgres 16 service container on every push and pull request.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>Results and learnings</h2>
+          <p>The system runs end to end with Docker Compose: API, worker, database and dashboard as independent containers, with migrations, tests and written design decisions in the repository.</p>
+          <p>The biggest lesson was that reliability is mostly about naming the guarantee honestly. Saying "at-least-once" and designing for duplicate runs is better than promising "exactly-once" and failing quietly.</p>
+          <p>Next, I'd like to give the dashboard a proper interface design pass — clearer failure states and a calmer layout for operators scanning many queues.</p>
+        </section>
+      </article>
+    </div>
+
+    <nav class="wrap cs-next" aria-label="More projects">
+      <a href="../index.html#projects">Back to all projects</a>
+      <a href="churn-prediction.html">Next: Churn prediction</a>
+    </nav>
+  </main>
+
+  <footer class="site-footer"><div class="wrap">© <span id="year">2026</span> Shyam Sundar S</div></footer>
+  <script src="../assets/js/main.js"></script>
+</body>
+</html>

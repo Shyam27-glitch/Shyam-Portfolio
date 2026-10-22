@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 470" role="img" aria-labelledby="t d">
+  <title id="t">Churn prediction: training and serving</title>
+  <desc id="d">Offline, a music-streaming user dataset with ten features is encoded and standardised, and a random forest of 100 trees is trained on 6,400 rows and saved as churn_model.pkl. At serving time a client posts ten already-encoded, already-scaled values to the Flask /predict endpoint; the model returns a churn probability, and a rule maps it to an action: above 0.7 premium discount, above 0.4 recommend playlist, otherwise send notification.</desc>
+  <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 10 5 0 10z" fill="#1d2226"/></marker></defs>
+  <style>
+    text{font-family:Archivo,Arial,Helvetica,sans-serif;fill:#1d2226}
+    .h{font-size:14px;font-weight:700}
+    .s{font-size:12px;fill:#50575e}
+    .c{font-size:11.5px;fill:#2747a3}
+    .box{fill:#fff;stroke:#1d2226;stroke-width:1.5}
+    .grp{fill:none;stroke:#50575e;stroke-dasharray:5 4}
+    .ln{stroke:#1d2226;stroke-width:1.4;fill:none}
+    .band{stroke:#1d2226;stroke-width:1}
+  </style>
+
+  <rect class="grp" x="8" y="10" width="704" height="120" rx="3"/>
+  <text class="s" x="20" y="30">Offline training · code not yet in the repository</text>
+  <rect class="box" x="20" y="42" width="150" height="74" rx="3"/>
+  <text class="h" x="32" y="66">User dataset</text>
+  <text class="s" x="32" y="84">10 features + churn label</text>
+  <text class="s" x="32" y="100">≈74% stay / 26% churn</text>
+  <rect class="box" x="196" y="42" width="166" height="74" rx="3"/>
+  <text class="h" x="208" y="66">Preprocess</text>
+  <text class="s" x="208" y="84">4 categoricals → integers</text>
+  <text class="s" x="208" y="100">6 numerics standardised</text>
+  <rect class="box" x="388" y="42" width="166" height="74" rx="3"/>
+  <text class="h" x="400" y="66">Random forest</text>
+  <text class="s" x="400" y="84">100 trees, defaults</text>
+  <text class="s" x="400" y="100">6,400 training rows</text>
+  <rect class="box" x="580" y="42" width="120" height="74" rx="3"/>
+  <text class="h" x="592" y="66">joblib</text>
+  <text class="s" x="592" y="84">churn_model.pkl</text>
+  <text class="s" x="592" y="100">in repo</text>
+  <path class="ln" d="M170 79 H192" marker-end="url(#a)"/>
+  <path class="ln" d="M362 79 H384" marker-end="url(#a)"/>
+  <path class="ln" d="M554 79 H576" marker-end="url(#a)"/>
+
+  <text class="s" x="20" y="166">Serving · app.py</text>
+  <rect class="box" x="20" y="178" width="196" height="80" rx="3"/>
+  <text class="h" x="32" y="202">Client</text>
+  <text class="s" x="32" y="220">POST /predict</text>
+  <text class="s" x="32" y="236">10 values, encoded + scaled,</text>
+  <text class="s" x="32" y="250">in training column order</text>
+  <rect class="box" x="250" y="178" width="186" height="80" rx="3"/>
+  <text class="h" x="262" y="202">Flask API</text>
+  <text class="s" x="262" y="220">loads model at startup</text>
+  <text class="s" x="262" y="236">predict_proba()[0][1]</text>
+  <rect class="box" x="470" y="178" width="230" height="80" rx="3"/>
+  <text class="h" x="482" y="202">agent_decision()</text>
+  <text class="s" x="482" y="220">fixed thresholds map the</text>
+  <text class="s" x="482" y="236">probability to one action</text>
+  <path class="ln" d="M216 218 H246" marker-end="url(#a)"/>
+  <path class="ln" d="M436 218 H466" marker-end="url(#a)"/>
+  <path class="ln" d="M640 116 V140 H343 V174" stroke-dasharray="4 4" marker-end="url(#a)"/>
+  <text class="c" x="352" y="156">loaded once</text>
+
+  <text class="s" x="20" y="296">Churn probability 0 → 1</text>
+  <rect class="band" x="20" y="306" width="272" height="34" fill="#dfe5f4"/>
+  <rect class="band" x="292" y="306" width="204" height="34" fill="#fff"/>
+  <rect class="band" x="496" y="306" width="204" height="34" fill="#f2d45c"/>
+  <text class="s" x="30" y="328" style="fill:#1d2226">≤ 0.4  Send notification</text>
+  <text class="s" x="302" y="328" style="fill:#1d2226">0.4–0.7  Recommend playlist</text>
+  <text class="s" x="506" y="328" style="fill:#1d2226">&gt; 0.7  Premium discount</text>
+  <text class="c" x="286" y="358">0.4</text>
+  <text class="c" x="490" y="358">0.7</text>
+
+  <rect class="box" x="20" y="378" width="680" height="44" rx="3"/>
+  <text class="s" x="34" y="405" style="font-family:Menlo,Consolas,monospace;fill:#1d2226">{ "churn_probability": 0.43, "action": "Recommend Playlist" }</text>
+  <text class="c" x="20" y="452">Encoders and scaler were not saved, so callers must reproduce the training preprocessing themselves.</text>
+</svg>

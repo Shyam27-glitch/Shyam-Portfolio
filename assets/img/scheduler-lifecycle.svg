@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 300" role="img" aria-labelledby="t d">
+  <title id="t">Job lifecycle state machine</title>
+  <desc id="d">Jobs move from scheduled or queued to claimed, running, and then completed or failed. Failed jobs go to pending retry while retries remain, otherwise to the dead letter queue, from which a user can manually requeue them. The reaper returns claimed or running jobs to queued when a worker stops heartbeating.</desc>
+  <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 10 5 0 10z" fill="#1d2226"/></marker></defs>
+  <style>
+    text{font-family:Archivo,Arial,Helvetica,sans-serif;fill:#1d2226;font-size:13px;font-weight:600}
+    .c{font-size:11px;font-weight:400;fill:#2747a3}
+    .st{fill:#fff;stroke:#1d2226;stroke-width:1.5}
+    .ok{fill:#dfe5f4;stroke:#2747a3;stroke-width:1.5}
+    .bad{fill:#f2d45c;stroke:#1d2226;stroke-width:1.5}
+    .ln{stroke:#1d2226;stroke-width:1.3;fill:none}
+    .dash{stroke-dasharray:5 4}
+  </style>
+  <rect class="st" x="14" y="40" width="96" height="36" rx="18"/><text x="30" y="63">scheduled</text>
+  <rect class="st" x="150" y="40" width="86" height="36" rx="18"/><text x="168" y="63">queued</text>
+  <rect class="st" x="276" y="40" width="86" height="36" rx="18"/><text x="292" y="63">claimed</text>
+  <rect class="st" x="402" y="40" width="86" height="36" rx="18"/><text x="420" y="63">running</text>
+  <rect class="ok" x="560" y="10" width="110" height="36" rx="18"/><text x="578" y="33">completed</text>
+  <rect class="st" x="560" y="100" width="110" height="36" rx="18"/><text x="594" y="123">failed</text>
+  <rect class="st" x="380" y="190" width="130" height="36" rx="18"/><text x="394" y="213">pending_retry</text>
+  <rect class="bad" x="560" y="230" width="130" height="36" rx="18"/><text x="574" y="253">dead_lettered</text>
+
+  <path class="ln" d="M110 58 H146" marker-end="url(#a)"/>
+  <path class="ln" d="M236 58 H272" marker-end="url(#a)"/>
+  <path class="ln" d="M362 58 H398" marker-end="url(#a)"/>
+  <path class="ln" d="M488 52 L556 30" marker-end="url(#a)"/>
+  <path class="ln" d="M488 66 L556 112" marker-end="url(#a)"/>
+  <path class="ln" d="M600 136 L470 188" marker-end="url(#a)"/><text class="c" x="520" y="168">retries left</text>
+  <path class="ln" d="M625 136 V226" marker-end="url(#a)"/><text class="c" x="632" y="190">exhausted</text>
+  <path class="ln" d="M380 208 H193 V80" marker-end="url(#a)"/><text class="c" x="230" y="202">backoff elapsed</text>
+  <path class="ln dash" d="M445 76 V118 H210 V80" marker-end="url(#a)"/>
+  <text class="c" x="240" y="112">reaper: worker stopped heartbeating</text>
+  <path class="ln dash" d="M560 260 H160 V80" marker-end="url(#a)"/><text class="c" x="300" y="254">manual retry from dashboard</text>
+</svg>

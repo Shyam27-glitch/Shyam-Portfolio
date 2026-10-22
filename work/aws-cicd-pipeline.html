@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Container CI Pipeline on AWS — Shyam Sundar S</title>
+  <meta name="description" content="Case study: a GitHub Actions pipeline that builds a Docker image on every push and publishes it to Amazon ECR, with Kubernetes and Helm definitions.">
+  <link rel="icon" href="../assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header">
+    <nav class="wrap" aria-label="Main">
+      <a class="brand" href="../index.html">Shyam Sundar S</a>
+      <button class="menu-btn" aria-expanded="false" aria-controls="nav-list">Menu</button>
+      <ul class="nav-list" id="nav-list">
+        <li><a href="../index.html#projects" aria-current="page">Projects</a></li>
+        <li><a href="../index.html#about">About</a></li>
+        <li><a href="../index.html#skills">Skills</a></li>
+        <li><a href="../index.html#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main id="main">
+    <div class="wrap cs-hero">
+      <a class="crumb" href="../index.html#projects">All projects</a>
+      <h1>Container CI Pipeline on AWS</h1>
+      <p class="lead">Every push to main produces a fresh Docker image in Amazon ECR, with no manual build steps.</p>
+    </div>
+
+    <div class="wrap cs-layout">
+      <aside class="spec" aria-label="Project facts">
+        <div><span class="tb-key">Status</span><span class="tb-val">Built</span></div>
+        <div><span class="tb-key">Type</span><span class="tb-val">DevOps / infrastructure</span></div>
+        <div><span class="tb-key">Stack</span>
+          <ul><li>GitHub Actions</li><li>Docker</li><li>Amazon ECR</li><li>Kubernetes, Helm</li><li>Node.js, Express</li></ul></div>
+        <div><span class="tb-key">Built</span><span class="tb-val">Mar 2026</span></div>
+        <div><span class="tb-key">Source</span><a href="https://github.com/Shyam27-glitch/devops-proj1" target="_blank" rel="noopener">GitHub repository</a></div>
+      </aside>
+
+      <article class="cs-body">
+        <section>
+          <h2>Problem</h2>
+          <p>Building and uploading container images by hand is slow, and it's easy to ship something that doesn't match the code in the repository. I wanted the repository itself to be the only way an image gets made.</p>
+        </section>
+
+        <section>
+          <h2>Approach</h2>
+          <p>The application is intentionally minimal — a small Express server — so the focus stays on the delivery path rather than the app.</p>
+          <figure>
+            <img src="../assets/img/cicd-pipeline.svg" alt="git push to main triggers GitHub Actions: configure AWS credentials, log in to ECR, build, tag and push the image to Amazon ECR in ap-south-1. Kubernetes deployment and Helm chart pull the image." width="720" height="340">
+            <figcaption>Pipeline stages from <code>.github/workflows/deploy.yml</code>, and the deployment definitions in the repository.</figcaption>
+          </figure>
+        </section>
+
+        <section>
+          <h2>Implementation</h2>
+          <ul>
+            <li><strong>Dockerfile</strong> builds on a Node 18 base image and exposes the app on port 3000.</li>
+            <li><strong>Workflow</strong> runs on every push to main: it configures AWS credentials from encrypted repository secrets, logs in to ECR, then builds, tags and pushes the image.</li>
+            <li><strong>Kubernetes Deployment</strong> runs two replicas of the image pulled from ECR, and a <strong>Helm chart</strong> packages the same deployment.</li>
+          </ul>
+          <p class="note">Screenshot to add: a successful Actions run and the image in the ECR console. <span class="todo">Capture and place here.</span></p>
+        </section>
+
+        <section>
+          <h2>Challenges</h2>
+          <p><span class="todo">Add what actually went wrong while setting this up — e.g. IAM permissions, ECR authentication, or image tags. Your 10 commits are the record.</span></p>
+        </section>
+
+        <section>
+          <h2>Learnings and next steps</h2>
+          <ul>
+            <li>Credentials never appear in code; they live in repository secrets.</li>
+            <li>The pipeline currently stops at publishing the image. The natural next step is deploying to the cluster from the workflow and tagging images by commit instead of only <code>latest</code>, so any version can be rolled back.</li>
+          </ul>
+        </section>
+      </article>
+    </div>
+
+    <nav class="wrap cs-next" aria-label="More projects">
+      <a href="churn-prediction.html">Previous: Churn prediction</a>
+      <a href="../index.html#projects">Back to all projects</a>
+    </nav>
+  </main>
+
+  <footer class="site-footer"><div class="wrap">© <span id="year">2026</span> Shyam Sundar S</div></footer>
+  <script src="../assets/js/main.js"></script>
+</body>
+</html>

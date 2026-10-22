@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Churn Prediction with Retention Actions — Shyam Sundar S</title>
+  <meta name="description" content="Case study: a churn prediction model served through a Flask API that maps each prediction to a recommended retention action.">
+  <link rel="icon" href="../assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header">
+    <nav class="wrap" aria-label="Main">
+      <a class="brand" href="../index.html">Shyam Sundar S</a>
+      <button class="menu-btn" aria-expanded="false" aria-controls="nav-list">Menu</button>
+      <ul class="nav-list" id="nav-list">
+        <li><a href="../index.html#projects" aria-current="page">Projects</a></li>
+        <li><a href="../index.html#about">About</a></li>
+        <li><a href="../index.html#skills">Skills</a></li>
+        <li><a href="../index.html#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main id="main">
+    <div class="wrap cs-hero">
+      <a class="crumb" href="../index.html#projects">All projects</a>
+      <h1>Churn Prediction with Retention Actions</h1>
+      <p class="lead">A model predicts how likely a user is to leave; a decision layer turns that number into something a product team can act on.</p>
+    </div>
+
+    <div class="wrap cs-layout">
+      <aside class="spec" aria-label="Project facts">
+        <div><span class="tb-key">Status</span><span class="tb-val">Built — API only, no interface yet</span></div>
+        <div><span class="tb-key">Type</span><span class="tb-val">Machine learning service</span></div>
+        <div><span class="tb-key">Built</span><span class="tb-val">Mar – May 2026</span></div>
+        <div><span class="tb-key">Model</span><span class="tb-val">Random forest, 100 trees</span></div>
+        <div><span class="tb-key">Stack</span>
+          <ul><li>Python</li><li>scikit-learn 1.6.1</li><li>joblib</li><li>Flask</li></ul></div>
+        <div><span class="tb-key">Data</span><span class="tb-val">Music-streaming users, 10 features, 6,400 training rows</span></div>
+        <div><span class="tb-key">Source</span><a href="https://github.com/Shyam27-glitch/Churn_project" target="_blank" rel="noopener">GitHub repository</a></div>
+      </aside>
+
+      <article class="cs-body">
+        <section>
+          <h2>Problem</h2>
+          <p>Subscription products lose revenue when users quietly stop listening. A churn model can flag who is at risk, but a probability like 0.63 doesn't tell anyone what to do. The useful output is a decision.</p>
+        </section>
+
+        <section>
+          <h2>Users and context</h2>
+          <p>The intended user is a retention team at a music-streaming service. The data describes listeners — how long they listen, how many songs they play, how often they skip, whether they hear ads — and the actions the system recommends are the levers such a team actually has: a notification, a playlist, or a discount.</p>
+        </section>
+
+        <section>
+          <h2>Data</h2>
+          <p>Each row is one user, with a binary label for whether they churned. The model was trained on ten features:</p>
+          <ul>
+            <li><strong>Profile:</strong> gender, age, country</li>
+            <li><strong>Plan and device:</strong> subscription type, device type, offline listening</li>
+            <li><strong>Behaviour:</strong> listening time, songs played per day, skip rate, ads listened per week</li>
+          </ul>
+          <p>About one user in four churned in the training data (roughly 74% stayed, 26% left), so the classes are imbalanced. The training set was 6,400 rows. <span class="todo">Add the dataset's name and source.</span></p>
+        </section>
+
+        <section>
+          <h2>Approach</h2>
+          <p>I split the problem in two: a model that estimates churn probability, and a simple, readable rule layer that decides the response. Keeping the rules separate from the model means a team can change its retention policy without retraining.</p>
+          <figure>
+            <img src="../assets/img/churn-flow.svg" alt="Offline: dataset, preprocessing, random forest trained on 6,400 rows, saved as churn_model.pkl. Serving: client posts ten encoded and scaled values to Flask, which returns a probability mapped to notification, playlist or discount." width="720" height="470">
+            <figcaption>Training and serving. The thresholds come from <code>app.py</code>; the training details are read from the saved model.</figcaption>
+          </figure>
+        </section>
+
+        <section>
+          <h2>Model and implementation</h2>
+          <ul>
+            <li><strong>Preprocessing.</strong> The four categorical columns (gender, country, subscription type, device type) are encoded as integers, offline listening is 0/1, and the six numeric columns are standardised to zero mean and unit variance.</li>
+            <li><strong>Model.</strong> A scikit-learn <code>RandomForestClassifier</code> with 100 trees and <code>random_state=42</code>, otherwise on library defaults. A random forest suits this data: it handles a mix of numeric and categorical features, captures interactions such as "high skip rate on a free plan" without manual feature engineering, and needs no scaling to work.</li>
+            <li><strong>Serving.</strong> The trained model is saved with joblib and loaded once when the Flask app starts. <code>POST /predict</code> takes the ten feature values, calls <code>predict_proba</code>, and passes the churn probability to <code>agent_decision</code>.</li>
+            <li><strong>Decision layer.</strong> Above 0.7, offer a premium discount; between 0.4 and 0.7, recommend a playlist; otherwise send a notification. The API returns both the probability and the action, so a front end can show the reasoning, not just the verdict.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>What drives the predictions</h2>
+          <p>The forest's feature importances put listening behaviour first: listening time (0.20), songs played per day (0.18), skip rate (0.17) and age (0.17) account for about 70% of the total, followed by country (0.09). Subscription type, device type, gender and ads each sit around 0.04–0.05, and offline listening barely matters (0.01).</p>
+          <p class="note">Two caveats. Impurity-based importance favours continuous features with many split points, so it can understate categorical ones; permutation importance on held-out data is the fairer check. And importance shows what the model relies on, not what causes churn.</p>
+        </section>
+
+        <section>
+          <h2>Results</h2>
+          <p><span class="todo">Add test-set results from your notebook: precision, recall, F1 and ROC-AUC for the churn class, plus the confusion matrix. With 26% churners, accuracy alone is misleading — a model that predicts "stays" for everyone scores about 74%.</span></p>
+        </section>
+
+        <section>
+          <h2>Limitations and what I'd improve</h2>
+          <ul>
+            <li><strong>Save the preprocessing with the model.</strong> The encoders and scaler weren't saved, so callers must send already-encoded, already-scaled values in the exact training column order. Wrapping them in a single scikit-learn <code>Pipeline</code> would let the API accept raw values like "age: 27".</li>
+            <li><strong>Handle the imbalance deliberately.</strong> The model uses no class weighting or resampling. Trying <code>class_weight="balanced"</code> and tuning the decision threshold for recall would catch more churners.</li>
+            <li><strong>Limit tree growth.</strong> Trees grow to full depth (23–36 levels, about 1,400 leaves each on 6,400 rows), which risks memorising the training data. Cross-validated tuning of depth and leaf size would show whether that is costing accuracy.</li>
+            <li><strong>Tie thresholds to cost.</strong> The 0.4 and 0.7 cut-offs are fixed by hand. Setting them from the cost of a discount against the value of a retained user would make the actions defensible.</li>
+            <li><strong>Validate inputs and pin dependencies.</strong> Accept named fields with validation, and fill in <code>requirements.txt</code> so the service is reproducible.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>Proposed next step: a retention dashboard</h2>
+          <p class="note">Not built yet — this is the planned interface for the model.</p>
+          <p>The API answers one user at a time. A retention team needs to see the whole picture: how risk is distributed across users, which listeners are most at risk and why, and a one-click way to act. The dashboard would show a risk distribution, a ranked list of users with the suggested action and the top factors behind each score, and the model's evaluation metrics, so the team knows how far to trust it.</p>
+        </section>
+      </article>
+    </div>
+
+    <nav class="wrap cs-next" aria-label="More projects">
+      <a href="job-scheduler.html">Previous: Job scheduler</a>
+      <a href="aws-cicd-pipeline.html">Next: CI pipeline on AWS</a>
+    </nav>
+  </main>
+
+  <footer class="site-footer"><div class="wrap">© <span id="year">2026</span> Shyam Sundar S</div></footer>
+  <script src="../assets/js/main.js"></script>
+</body>
+</html>
